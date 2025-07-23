@@ -1,5 +1,7 @@
 import remote from "@electron/remote";
 import { ipcRenderer } from "electron";
+import * as fs from "fs";
+import * as path from "path";
 const Native = {
     on: (event, callback) => {
         ipcRenderer.on('native-event', (_, data) => {
@@ -17,6 +19,21 @@ const Native = {
 };
 window.Native = Native;
 window.remote = remote;
+try {
+    const preloadPath = path.join(process.cwd(), 'resources/js/nativephp-preload.js');
+    if (fs.existsSync(preloadPath)) {
+        const userPreload = require(preloadPath);
+        if (userPreload.default && userPreload.default.exposeAPIs) {
+            Object.entries(userPreload.default.exposeAPIs).forEach(([name, api]) => {
+                window[name] = api;
+                console.log(`[NativePHP] Exposed preload API: ${name}`);
+            });
+        }
+    }
+}
+catch (error) {
+    console.error('[NativePHP] Error loading preload extensions:', error);
+}
 ipcRenderer.on('log', (event, { level, message, context }) => {
     if (level === 'error') {
         console.error(`[${level}] ${message}`, context);

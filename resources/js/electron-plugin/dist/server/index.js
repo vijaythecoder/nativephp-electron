@@ -22,7 +22,7 @@ export function startPhpApp() {
 export function runScheduler() {
     startScheduler(state.randomSecret, state.electronApiPort, state.phpIni);
 }
-export function startAPI() {
-    return startAPIServer(state.randomSecret);
+export function startAPI(extensions = []) {
+    return startAPIServer(state.randomSecret, extensions);
 }
 export { retrieveNativePHPConfig, retrievePhpIniSettings };

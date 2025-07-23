@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { app, session, powerMonitor } from "electron";
+import { app, session, powerMonitor, ipcMain } from "electron";
 import { initialize } from "@electron/remote/main/index.js";
 import state from "./server/state.js";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
@@ -17,6 +17,7 @@ import { resolve } from "path";
 import { stopAllProcesses } from "./server/api/childProcess.js";
 import ps from "ps-node";
 import killSync from "kill-sync";
+import { loadUserExtensions } from "./extensions/loader.js";
 import electronUpdater from 'electron-updater';
 const { autoUpdater } = electronUpdater;
 class NativePHP {
@@ -24,14 +25,28 @@ class NativePHP {
         this.processes = [];
         this.schedulerInterval = undefined;
         this.mainWindow = null;
+        this.extensions = [];
     }
     bootstrap(app, icon, phpBinary, cert) {
-        initialize();
-        state.icon = icon;
-        state.php = phpBinary;
-        state.caCert = cert;
-        this.bootstrapApp(app);
-        this.addEventListeners(app);
+        return __awaiter(this, void 0, void 0, function* () {
+            initialize();
+            state.icon = icon;
+            state.php = phpBinary;
+            state.caCert = cert;
+            this.extensions = yield loadUserExtensions();
+            for (const ext of this.extensions) {
+                if (ext.beforeReady) {
+                    try {
+                        yield ext.beforeReady(app);
+                    }
+                    catch (error) {
+                        console.error('[NativePHP] Extension beforeReady error:', error);
+                    }
+                }
+            }
+            this.bootstrapApp(app);
+            this.addEventListeners(app);
+        });
     }
     addEventListeners(app) {
         app.on("open-url", (event, url) => {
@@ -51,13 +66,23 @@ class NativePHP {
                 app.quit();
             }
         });
-        app.on("before-quit", () => {
+        app.on("before-quit", () => __awaiter(this, void 0, void 0, function* () {
+            for (const ext of this.extensions) {
+                if (ext.beforeQuit) {
+                    try {
+                        yield ext.beforeQuit();
+                    }
+                    catch (error) {
+                        console.error('[NativePHP] Extension beforeQuit error:', error);
+                    }
+                }
+            }
             if (this.schedulerInterval) {
                 clearInterval(this.schedulerInterval);
             }
             stopAllProcesses();
             this.killChildProcesses();
-        });
+        }));
         app.on("browser-window-created", (_, window) => {
             optimizer.watchWindowShortcuts(window);
         });
@@ -80,6 +105,24 @@ class NativePHP {
             state.phpIni = yield this.loadPhpIni();
             yield this.startPhpApp();
             this.startScheduler();
+            for (const ext of this.extensions) {
+                if (ext.ipcHandlers) {
+                    Object.entries(ext.ipcHandlers).forEach(([channel, handler]) => {
+                        ipcMain.handle(channel, handler);
+                        console.log(`[NativePHP] Registered IPC handler: ${channel}`);
+                    });
+                }
+            }
+            for (const ext of this.extensions) {
+                if (ext.afterReady) {
+                    try {
+                        yield ext.afterReady(app, this.mainWindow);
+                    }
+                    catch (error) {
+                        console.error('[NativePHP] Extension afterReady error:', error);
+                    }
+                }
+            }
             powerMonitor.on("suspend", () => {
                 this.stopScheduler();
             });
@@ -165,7 +208,7 @@ class NativePHP {
     }
     startElectronApi() {
         return __awaiter(this, void 0, void 0, function* () {
-            const electronApi = yield startAPI();
+            const electronApi = yield startAPI(this.extensions);
             state.electronApiPort = electronApi.port;
             console.log("Electron API server started on port", electronApi.port);
         });
