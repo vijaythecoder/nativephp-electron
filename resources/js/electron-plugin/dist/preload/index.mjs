@@ -13,15 +13,14 @@ const Native = {
     contextMenu: (template) => {
         let menu = remote.Menu.buildFromTemplate(template);
         menu.popup({ window: remote.getCurrentWindow() });
-    },
-    ipcRendererInvoke: new Proxy({}, {
-        get: (target, methodName) => {
-            return (...args) => ipcRenderer.invoke(methodName, ...args);
-        }
-    })
+    }
 };
 window.Native = Native;
 window.remote = remote;
+window.audioLoopback = {
+    enableLoopback: () => ipcRenderer.invoke('enable-loopback-audio'),
+    disableLoopback: () => ipcRenderer.invoke('disable-loopback-audio')
+};
 ipcRenderer.on('log', (event, { level, message, context }) => {
     if (level === 'error') {
         console.error(`[${level}] ${message}`, context);

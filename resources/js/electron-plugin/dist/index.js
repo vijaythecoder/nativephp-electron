@@ -47,7 +47,12 @@ class NativePHP {
             for (const ext of this.extensions) {
                 if (ext.ipcHandlers) {
                     Object.entries(ext.ipcHandlers).forEach(([channel, handler]) => {
-                        ipcMain.handle(channel, handler);
+                        if (!ipcMain.listenerCount(channel)) {
+                            ipcMain.handle(channel, handler);
+                        }
+                        else {
+                            console.warn(`[Extension] IPC handler '${channel}' already registered, skipping`);
+                        }
                     });
                 }
             }

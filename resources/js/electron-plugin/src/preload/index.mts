@@ -16,13 +16,7 @@ const Native = {
     contextMenu: (template) => {
         let menu = remote.Menu.buildFromTemplate(template);
         menu.popup({ window: remote.getCurrentWindow() });
-    },
-    ipcRendererInvoke: new Proxy({}, {
-        get: (target, methodName) => {
-            // Return a function that invokes the IPC channel with the method name
-            return (...args) => ipcRenderer.invoke(methodName as string, ...args);
-        }
-    })
+    }
 };
 
 // @ts-ignore
@@ -30,6 +24,14 @@ window.Native = Native;
 
 // @ts-ignore
 window.remote = remote;
+
+// Expose audio loopback functions
+// Since contextIsolation is false, we attach directly to window
+// @ts-ignore
+window.audioLoopback = {
+  enableLoopback: () => ipcRenderer.invoke('enable-loopback-audio'),
+  disableLoopback: () => ipcRenderer.invoke('disable-loopback-audio')
+};
 
 ipcRenderer.on('log', (event, {level, message, context}) => {
     if (level === 'error') {
