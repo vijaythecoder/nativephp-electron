@@ -44,6 +44,13 @@ class NativePHP {
                     }
                 }
             }
+            for (const ext of this.extensions) {
+                if (ext.ipcHandlers) {
+                    Object.entries(ext.ipcHandlers).forEach(([channel, handler]) => {
+                        ipcMain.handle(channel, handler);
+                    });
+                }
+            }
             this.bootstrapApp(app);
             this.addEventListeners(app);
         });
@@ -105,13 +112,6 @@ class NativePHP {
             state.phpIni = yield this.loadPhpIni();
             yield this.startPhpApp();
             this.startScheduler();
-            for (const ext of this.extensions) {
-                if (ext.ipcHandlers) {
-                    Object.entries(ext.ipcHandlers).forEach(([channel, handler]) => {
-                        ipcMain.handle(channel, handler);
-                    });
-                }
-            }
             for (const ext of this.extensions) {
                 if (ext.afterReady) {
                     try {

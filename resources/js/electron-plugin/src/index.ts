@@ -54,6 +54,15 @@ class NativePHP {
       }
     }
 
+    // Register IPC handlers from extensions (must be done before app.whenReady)
+    for (const ext of this.extensions) {
+      if (ext.ipcHandlers) {
+        Object.entries(ext.ipcHandlers).forEach(([channel, handler]) => {
+          ipcMain.handle(channel, handler);
+        });
+      }
+    }
+
     this.bootstrapApp(app);
     this.addEventListeners(app);
   }
@@ -135,15 +144,6 @@ class NativePHP {
 
     await this.startPhpApp();
     this.startScheduler();
-
-    // Register IPC handlers from extensions
-    for (const ext of this.extensions) {
-      if (ext.ipcHandlers) {
-        Object.entries(ext.ipcHandlers).forEach(([channel, handler]) => {
-          ipcMain.handle(channel, handler);
-        });
-      }
-    }
 
     // Call afterReady hooks (window will be created by Laravel)
     for (const ext of this.extensions) {
