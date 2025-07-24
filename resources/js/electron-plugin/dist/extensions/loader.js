@@ -9,11 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import * as fs from "fs";
 import * as path from "path";
+import { getAppPath } from "../server/php.js";
 export function loadUserExtensions() {
     return __awaiter(this, void 0, void 0, function* () {
         const extensions = [];
         try {
-            const singleExtPath = path.join(process.cwd(), 'resources/js/nativephp-extension.js');
+            const appPath = getAppPath();
+            console.log('[NativePHP] Loading extensions from app path:', appPath);
+            const singleExtPath = path.join(appPath, 'resources/js/nativephp-extension.js');
             if (fs.existsSync(singleExtPath)) {
                 const ext = yield import(pathToFileURL(singleExtPath).href);
                 if (ext.default) {
@@ -21,7 +24,7 @@ export function loadUserExtensions() {
                     console.log('[NativePHP] Loaded extension from:', singleExtPath);
                 }
             }
-            const extensionsDir = path.join(process.cwd(), 'resources/js/nativephp-extensions');
+            const extensionsDir = path.join(appPath, 'resources/js/nativephp-extensions');
             if (fs.existsSync(extensionsDir)) {
                 const files = fs.readdirSync(extensionsDir);
                 for (const file of files) {

@@ -48,6 +48,7 @@ class NativePHP {
       if (ext.beforeReady) {
         try {
           await ext.beforeReady(app);
+          console.log('extension beforeready - vijay')
         } catch (error) {
           console.error('[NativePHP] Extension beforeReady error:', error);
         }

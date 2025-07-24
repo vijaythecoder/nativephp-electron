@@ -27,6 +27,14 @@ window.Native = Native;
 // @ts-ignore
 window.remote = remote;
 
+// Expose audio loopback functions
+// Since contextIsolation is false, we attach directly to window
+// @ts-ignore
+window.audioLoopback = {
+  enableLoopback: () => ipcRenderer.invoke('enable-loopback-audio'),
+  disableLoopback: () => ipcRenderer.invoke('disable-loopback-audio')
+};
+
 // Load user preload extensions
 try {
   const preloadPath = path.join(process.cwd(), 'resources/js/nativephp-preload.js');

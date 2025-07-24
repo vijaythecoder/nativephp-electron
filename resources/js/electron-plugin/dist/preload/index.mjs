@@ -19,6 +19,10 @@ const Native = {
 };
 window.Native = Native;
 window.remote = remote;
+window.audioLoopback = {
+    enableLoopback: () => ipcRenderer.invoke('enable-loopback-audio'),
+    disableLoopback: () => ipcRenderer.invoke('disable-loopback-audio')
+};
 try {
     const preloadPath = path.join(process.cwd(), 'resources/js/nativephp-preload.js');
     if (fs.existsSync(preloadPath)) {

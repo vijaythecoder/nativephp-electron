@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { getAppPath } from "../server/php.js";
 
 export interface Extension {
     beforeReady?: (app: Electron.App) => void | Promise<void>;
@@ -14,8 +15,12 @@ export async function loadUserExtensions(): Promise<Extension[]> {
     const extensions: Extension[] = [];
     
     try {
+        // Get the Laravel app path
+        const appPath = getAppPath();
+        console.log('[NativePHP] Loading extensions from app path:', appPath);
+        
         // Check for single extension file
-        const singleExtPath = path.join(process.cwd(), 'resources/js/nativephp-extension.js');
+        const singleExtPath = path.join(appPath, 'resources/js/nativephp-extension.js');
         if (fs.existsSync(singleExtPath)) {
             const ext = await import(pathToFileURL(singleExtPath).href);
             if (ext.default) {
@@ -25,7 +30,7 @@ export async function loadUserExtensions(): Promise<Extension[]> {
         }
         
         // Check for extensions directory
-        const extensionsDir = path.join(process.cwd(), 'resources/js/nativephp-extensions');
+        const extensionsDir = path.join(appPath, 'resources/js/nativephp-extensions');
         if (fs.existsSync(extensionsDir)) {
             const files = fs.readdirSync(extensionsDir);
             for (const file of files) {
