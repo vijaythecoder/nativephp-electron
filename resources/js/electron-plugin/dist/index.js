@@ -38,7 +38,6 @@ class NativePHP {
                 if (ext.beforeReady) {
                     try {
                         yield ext.beforeReady(app);
-                        console.log('extension beforeready - vijay');
                     }
                     catch (error) {
                         console.error('[NativePHP] Extension beforeReady error:', error);
@@ -110,7 +109,6 @@ class NativePHP {
                 if (ext.ipcHandlers) {
                     Object.entries(ext.ipcHandlers).forEach(([channel, handler]) => {
                         ipcMain.handle(channel, handler);
-                        console.log(`[NativePHP] Registered IPC handler: ${channel}`);
                     });
                 }
             }

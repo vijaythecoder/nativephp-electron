@@ -17,35 +17,17 @@ export async function loadUserExtensions(): Promise<Extension[]> {
     try {
         // Get the Laravel app path
         const appPath = getAppPath();
-        console.log('[NativePHP] Loading extensions from app path:', appPath);
         
-        // Check for single extension file
-        const singleExtPath = path.join(appPath, 'resources/js/nativephp-extension.js');
-        if (fs.existsSync(singleExtPath)) {
-            const ext = await import(pathToFileURL(singleExtPath).href);
+        // Load the extension file
+        const extensionPath = path.join(appPath, 'resources/js/nativephp-extension.js');
+        if (fs.existsSync(extensionPath)) {
+            const ext = await import(pathToFileURL(extensionPath).href);
             if (ext.default) {
                 extensions.push(ext.default);
-                console.log('[NativePHP] Loaded extension from:', singleExtPath);
-            }
-        }
-        
-        // Check for extensions directory
-        const extensionsDir = path.join(appPath, 'resources/js/nativephp-extensions');
-        if (fs.existsSync(extensionsDir)) {
-            const files = fs.readdirSync(extensionsDir);
-            for (const file of files) {
-                if (file.endsWith('.js') || file.endsWith('.mjs')) {
-                    const extPath = path.join(extensionsDir, file);
-                    const ext = await import(pathToFileURL(extPath).href);
-                    if (ext.default) {
-                        extensions.push(ext.default);
-                        console.log('[NativePHP] Loaded extension from:', extPath);
-                    }
-                }
             }
         }
     } catch (error) {
-        console.error('[NativePHP] Error loading extensions:', error);
+        console.error('[NativePHP] Error loading extension:', error);
     }
     
     return extensions;
