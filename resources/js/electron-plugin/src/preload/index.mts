@@ -31,14 +31,6 @@ window.Native = Native;
 // @ts-ignore
 window.remote = remote;
 
-// Expose audio loopback functions
-// Since contextIsolation is false, we attach directly to window
-// @ts-ignore
-window.audioLoopback = {
-  enableLoopback: () => ipcRenderer.invoke('enable-loopback-audio'),
-  disableLoopback: () => ipcRenderer.invoke('disable-loopback-audio')
-};
-
 ipcRenderer.on('log', (event, {level, message, context}) => {
     if (level === 'error') {
       console.error(`[${level}] ${message}`, context)
