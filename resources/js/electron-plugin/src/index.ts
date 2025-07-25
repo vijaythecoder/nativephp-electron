@@ -34,12 +34,6 @@ class NativePHP {
     cert: string
   ) {
 
-    initialize();
-
-    state.icon = icon;
-    state.php = phpBinary;
-    state.caCert = cert;
-
     // Load user extensions
     this.extensions = await loadUserExtensions();
 
@@ -67,6 +61,14 @@ class NativePHP {
         });
       }
     }
+    
+    initialize();
+
+    state.icon = icon;
+    state.php = phpBinary;
+    state.caCert = cert;
+
+    
 
     this.bootstrapApp(app);
     this.addEventListeners(app);

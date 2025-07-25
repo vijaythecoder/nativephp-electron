@@ -29,10 +29,6 @@ class NativePHP {
     }
     bootstrap(app, icon, phpBinary, cert) {
         return __awaiter(this, void 0, void 0, function* () {
-            initialize();
-            state.icon = icon;
-            state.php = phpBinary;
-            state.caCert = cert;
             this.extensions = yield loadUserExtensions();
             for (const ext of this.extensions) {
                 if (ext.beforeReady) {
@@ -56,6 +52,10 @@ class NativePHP {
                     });
                 }
             }
+            initialize();
+            state.icon = icon;
+            state.php = phpBinary;
+            state.caCert = cert;
             this.bootstrapApp(app);
             this.addEventListeners(app);
         });
