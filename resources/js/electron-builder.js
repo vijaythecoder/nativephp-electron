@@ -97,6 +97,8 @@ export default {
                 "Application requests access to the device's camera.",
             NSMicrophoneUsageDescription:
                 "Application requests access to the device's microphone.",
+            NSScreenCaptureUsageDescription:
+                "Application requests access to screen recording to capture system audio.",
             NSDocumentsFolderUsageDescription:
                 "Application requests access to the user's Documents folder.",
             NSDownloadsFolderUsageDescription:

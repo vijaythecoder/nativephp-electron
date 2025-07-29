@@ -1,9 +1,9 @@
 {
-    "name": "NativePHP",
+    "name": "clueless",
     "version": "1.0.0",
-    "description": "A NativePHP Electron application",
+    "description": "An awesome app built with NativePHP",
     "main": "./out/main/index.js",
-    "author": "NativePHP",
+    "author": null,
     "homepage": "https://nativephp.com",
     "type": "module",
     "engines": {
@@ -39,6 +39,7 @@
     },
     "dependencies": {
         "@electron-toolkit/preload": "^3.0.1",
+        "node-mac-permissions": "^2.2.0",
         "@electron-toolkit/utils": "^4.0.0",
         "@electron/remote": "^2.1.2",
         "axios": "^1.7.9",
