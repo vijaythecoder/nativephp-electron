@@ -4,10 +4,14 @@ import path from 'path'
 import defaultIcon from '../../resources/icon.png?asset&asarUnpack'
 import certificate from '../../resources/cacert.pem?asset&asarUnpack'
 import { initializePermissions, cleanupPermissions } from './permissions.js'
+import { initMain } from 'electron-audio-loopback';
 
 let phpBinary = process.platform === 'win32' ? 'php.exe' : 'php';
 
 phpBinary = path.join(import.meta.dirname, '../../resources/php', phpBinary).replace("app.asar", "app.asar.unpacked");
+
+// Initialize electron-audio-loopback main process BEFORE app is ready
+initMain();
 
 /**
  * Turn on the lights for the NativePHP app.
