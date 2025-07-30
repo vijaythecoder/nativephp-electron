@@ -3,11 +3,16 @@ import permissions from 'node-mac-permissions';
 
 /**
  * Available permission types for macOS
+ * 
+ * Note: Screen capture permission works differently than others:
+ * - First request shows a system modal
+ * - Subsequent requests can open System Preferences
+ * - Use 'permissions:request-screen-capture' for more control
  */
 const PERMISSION_TYPES = {
     camera: 'camera',       // camera access
     microphone: 'microphone', // microphone access
-    screen: 'screen',       // screen capture
+    screen: 'screen',       // screen capture (screen recording)
     documents: 'documents', // documents folder
     downloads: 'downloads'  // downloads folder
 }
@@ -62,7 +67,37 @@ export function initializePermissions() {
                 };
             }
 
-            const status = await permissions.askForMicrophoneAccess(permissionType);
+            let status;
+            
+            // Use the appropriate method based on permission type
+            switch (permissionType) {
+                case 'camera':
+                    status = await permissions.askForCameraAccess();
+                    break;
+                case 'microphone':
+                    status = await permissions.askForMicrophoneAccess();
+                    break;
+                case 'screen':
+                    // For screen capture, we don't get a status back
+                    // The method opens system preferences if needed
+                    permissions.askForScreenCaptureAccess();
+                    // Check the current status after requesting
+                    status = permissions.getAuthStatus('screen');
+                    break;
+                case 'documents':
+                    status = await permissions.askForFoldersAccess('documents');
+                    break;
+                case 'downloads':
+                    status = await permissions.askForFoldersAccess('downloads');
+                    break;
+                default:
+                    return {
+                        success: false,
+                        permission: permissionType,
+                        error: `Unsupported permission type: ${permissionType}`
+                    };
+            }
+            
             console.log(`Permission request result for ${permissionType}: ${status}`);
             
             return {
@@ -109,6 +144,44 @@ export function initializePermissions() {
         }
     });
 
+    // Handle screen capture permission request with optional preferences opening
+    ipcMain.handle('permissions:request-screen-capture', async (event, openPreferences = false) => {
+        try {
+            console.log(`Requesting screen capture permission, openPreferences: ${openPreferences}`);
+            
+            // Check current status first
+            const currentStatus = permissions.getAuthStatus('screen');
+            
+            if (currentStatus === 'authorized') {
+                return {
+                    success: true,
+                    permission: 'screen',
+                    status: 'authorized'
+                };
+            }
+            
+            // Request access - this will show a modal on first request
+            // or open System Preferences if openPreferences is true
+            permissions.askForScreenCaptureAccess(openPreferences);
+            
+            // Check status again after request
+            const newStatus = permissions.getAuthStatus('screen');
+            
+            return {
+                success: true,
+                permission: 'screen',
+                status: newStatus
+            };
+        } catch (error) {
+            console.error('Error requesting screen capture permission:', error);
+            return {
+                success: false,
+                permission: 'screen',
+                error: error.message
+            };
+        }
+    });
+
     console.log('macOS permissions handlers initialized successfully');
 }
 
@@ -122,6 +195,7 @@ export function cleanupPermissions() {
     ipcMain.removeHandler('permissions:check');
     ipcMain.removeHandler('permissions:request');
     ipcMain.removeHandler('permissions:get-all');
+    ipcMain.removeHandler('permissions:request-screen-capture');
     
     console.log('macOS permissions handlers cleaned up');
 }
