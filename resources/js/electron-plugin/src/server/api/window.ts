@@ -240,7 +240,7 @@ router.post('/open', (req, res) => {
         spellcheck: false,
         preload: preloadPath,
         sandbox: false,
-        contextIsolation: false,
+        contextIsolation: true,
         nodeIntegration: true,
     };
 
@@ -286,8 +286,8 @@ router.post('/open', (req, res) => {
         autoHideMenuBar,
         ...(process.platform === 'linux' ? {icon: state.icon} : {}),
         webPreferences: {
-            ...webPreferences,
-            ...defaultWebPreferences
+            ...defaultWebPreferences,
+            ...webPreferences
         },
         fullscreen,
         fullscreenable,

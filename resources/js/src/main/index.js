@@ -3,6 +3,7 @@ import NativePHP from '#plugin'
 import path from 'path'
 import defaultIcon from '../../resources/icon.png?asset&asarUnpack'
 import certificate from '../../resources/cacert.pem?asset&asarUnpack'
+import { initializePermissions, cleanupPermissions } from './permissions.js'
 
 let phpBinary = process.platform === 'win32' ? 'php.exe' : 'php';
 
@@ -17,3 +18,15 @@ NativePHP.bootstrap(
     phpBinary,
     certificate
 );
+
+// Initialize macOS permissions handlers
+app.whenReady().then(() => {
+    console.log('App ready, initializing permissions...');
+    initializePermissions();
+});
+
+// Cleanup on app exit
+app.on('before-quit', () => {
+    console.log('App quitting, cleaning up permissions...');
+    cleanupPermissions();
+});

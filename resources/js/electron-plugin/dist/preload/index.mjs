@@ -1,5 +1,14 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 import remote from "@electron/remote";
-import { ipcRenderer } from "electron";
+import { ipcRenderer, contextBridge } from "electron";
 const Native = {
     on: (event, callback) => {
         ipcRenderer.on('native-event', (_, data) => {
@@ -15,8 +24,33 @@ const Native = {
         menu.popup({ window: remote.getCurrentWindow() });
     }
 };
-window.Native = Native;
-window.remote = remote;
+contextBridge.exposeInMainWorld('Native', Native);
+contextBridge.exposeInMainWorld('remote', remote);
+contextBridge.exposeInMainWorld('macPermissions', {
+    checkPermission: (permissionType) => __awaiter(void 0, void 0, void 0, function* () {
+        return yield ipcRenderer.invoke('permissions:check', permissionType);
+    }),
+    requestPermission: (permissionType) => __awaiter(void 0, void 0, void 0, function* () {
+        return yield ipcRenderer.invoke('permissions:request', permissionType);
+    }),
+    getAllPermissions: () => __awaiter(void 0, void 0, void 0, function* () {
+        return yield ipcRenderer.invoke('permissions:get-all');
+    }),
+    PERMISSION_TYPES: {
+        CAMERA: 'camera',
+        MICROPHONE: 'microphone',
+        SCREEN: 'screen',
+        DOCUMENTS: 'documents',
+        DOWNLOADS: 'downloads'
+    },
+    PERMISSION_STATUS: {
+        NOT_DETERMINED: 'not determined',
+        DENIED: 'denied',
+        AUTHORIZED: 'authorized',
+        RESTRICTED: 'restricted',
+        LIMITED: 'limited'
+    }
+});
 ipcRenderer.on('log', (event, { level, message, context }) => {
     if (level === 'error') {
         console.error(`[${level}] ${message}`, context);
