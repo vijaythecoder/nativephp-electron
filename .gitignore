@@ -8,3 +8,5 @@ phpunit.xml
 vendor
 node_modules
 resources/js/*.log
+.DS_Store
+**/.DS_Store

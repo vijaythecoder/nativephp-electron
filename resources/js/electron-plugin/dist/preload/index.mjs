@@ -51,6 +51,10 @@ contextBridge.exposeInMainWorld('macPermissions', {
         LIMITED: 'limited'
     }
 });
+contextBridge.exposeInMainWorld('audioLoopback', {
+    enableLoopbackAudio: () => ipcRenderer.invoke('enable-loopback-audio'),
+    disableLoopbackAudio: () => ipcRenderer.invoke('disable-loopback-audio')
+});
 ipcRenderer.on('log', (event, { level, message, context }) => {
     if (level === 'error') {
         console.error(`[${level}] ${message}`, context);

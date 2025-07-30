@@ -74,6 +74,21 @@ contextBridge.exposeInMainWorld('macPermissions', {
     }
 });
 
+// Expose audio loopback API to renderer process (for manual mode)
+contextBridge.exposeInMainWorld('audioLoopback', {
+    /**
+     * Enable audio loopback capture
+     * This will override the default getDisplayMedia behavior
+     */
+    enableLoopbackAudio: () => ipcRenderer.invoke('enable-loopback-audio'),
+    
+    /**
+     * Disable audio loopback capture
+     * This will restore full getDisplayMedia functionality
+     */
+    disableLoopbackAudio: () => ipcRenderer.invoke('disable-loopback-audio')
+});
+
 ipcRenderer.on('log', (event, {level, message, context}) => {
     if (level === 'error') {
       console.error(`[${level}] ${message}`, context)
