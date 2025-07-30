@@ -62,7 +62,7 @@ export function initializePermissions() {
                 };
             }
 
-            const status = await permissions.askForPermission(permissionType);
+            const status = await permissions.askForMicrophoneAccess(permissionType);
             console.log(`Permission request result for ${permissionType}: ${status}`);
             
             return {
