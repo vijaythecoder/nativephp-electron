@@ -2714,6 +2714,11 @@ ejs@^3.1.8:
   dependencies:
     jake "^10.8.5"
 
+electron-audio-loopback@^1.0.0:
+  version "1.0.5"
+  resolved "https://registry.npmjs.org/electron-audio-loopback/-/electron-audio-loopback-1.0.5.tgz"
+  integrity sha512-E/xneHrk2tLD7JntbjBJJr4HyWGaLrdGvqmoeBJZg9URbBBm2OgTEZ5TWgTkIPiAwEvAllsV+VfdBOfP4FeMkw==
+
 electron-builder-squirrel-windows@26.0.15:
   version "26.0.15"
   resolved "https://registry.npmjs.org/electron-builder-squirrel-windows/-/electron-builder-squirrel-windows-26.0.15.tgz"
@@ -2849,7 +2854,7 @@ electron-winstaller@5.4.0:
   optionalDependencies:
     "@electron/windows-sign" "^1.1.2"
 
-electron@^32.2.7, "electron@>= 13.0.0", electron@>=13.0.0, "electron@>=9.0.0 <33.0.0":
+electron@^32.2.7, "electron@>= 13.0.0", electron@>=13.0.0, electron@>=31.0.1, "electron@>=9.0.0 <33.0.0":
   version "32.3.3"
   resolved "https://registry.npmjs.org/electron/-/electron-32.3.3.tgz"
   integrity sha512-7FT8tDg+MueAw8dBn5LJqDvlM4cZkKJhXfgB3w7P5gvSoUQVAY6LIQcXJxgL+vw2rIRY/b9ak7ZBFbCMF2Bk4w==
