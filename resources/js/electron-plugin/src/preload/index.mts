@@ -1,5 +1,5 @@
 import remote from "@electron/remote";
-import {ipcRenderer} from "electron";
+import {ipcRenderer, contextBridge} from "electron";
 
 const Native = {
     on: (event, callback) => {
@@ -19,11 +19,60 @@ const Native = {
     }
 };
 
-// @ts-ignore
-window.Native = Native;
+// Expose Native and remote APIs using contextBridge
+contextBridge.exposeInMainWorld('Native', Native);
+contextBridge.exposeInMainWorld('remote', remote);
 
-// @ts-ignore
-window.remote = remote;
+// Expose macOS permissions API using contextBridge
+contextBridge.exposeInMainWorld('macPermissions', {
+    /**
+     * Check the current status of a permission
+     * @param {string} permissionType - One of: camera, microphone, screen, documents, downloads
+     * @returns {Promise<{success: boolean, permission: string, status?: string, error?: string}>}
+     */
+    checkPermission: async (permissionType: string) => {
+        return await ipcRenderer.invoke('permissions:check', permissionType)
+    },
+
+    /**
+     * Request a specific permission
+     * @param {string} permissionType - One of: camera, microphone, screen, documents, downloads
+     * @returns {Promise<{success: boolean, permission: string, status?: string, error?: string}>}
+     */
+    requestPermission: async (permissionType: string) => {
+        return await ipcRenderer.invoke('permissions:request', permissionType)
+    },
+
+    /**
+     * Get status of all supported permissions
+     * @returns {Promise<{success: boolean, permissions?: object, error?: string}>}
+     */
+    getAllPermissions: async () => {
+        return await ipcRenderer.invoke('permissions:get-all')
+    },
+
+    /**
+     * Available permission types
+     */
+    PERMISSION_TYPES: {
+        CAMERA: 'camera',
+        MICROPHONE: 'microphone',
+        SCREEN: 'screen',
+        DOCUMENTS: 'documents',
+        DOWNLOADS: 'downloads'
+    },
+
+    /**
+     * Permission status values
+     */
+    PERMISSION_STATUS: {
+        NOT_DETERMINED: 'not determined',
+        DENIED: 'denied',
+        AUTHORIZED: 'authorized',
+        RESTRICTED: 'restricted',
+        LIMITED: 'limited'
+    }
+});
 
 ipcRenderer.on('log', (event, {level, message, context}) => {
     if (level === 'error') {

@@ -152,7 +152,7 @@ router.post('/open', (req, res) => {
         spellcheck: false,
         preload: preloadPath,
         sandbox: false,
-        contextIsolation: false,
+        contextIsolation: true,
         nodeIntegration: true,
     };
     let windowState = undefined;
@@ -179,7 +179,7 @@ router.post('/open', (req, res) => {
         trafficLightPosition,
         vibrancy,
         focusable,
-        autoHideMenuBar }, (process.platform === 'linux' ? { icon: state.icon } : {})), { webPreferences: Object.assign(Object.assign({}, webPreferences), defaultWebPreferences), fullscreen,
+        autoHideMenuBar }, (process.platform === 'linux' ? { icon: state.icon } : {})), { webPreferences: Object.assign(Object.assign({}, defaultWebPreferences), webPreferences), fullscreen,
         fullscreenable,
         kiosk }));
     if ((process.env.NODE_ENV === 'development' || showDevTools === true) && showDevTools !== false) {

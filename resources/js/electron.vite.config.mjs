@@ -5,6 +5,7 @@ export default defineConfig({
     main: {
         build: {
             rollupOptions: {
+                external: ['node-mac-permissions'],
                 plugins: [
                     {
                         name: 'watch-external',
