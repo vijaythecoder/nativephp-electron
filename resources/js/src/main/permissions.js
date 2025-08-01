@@ -182,6 +182,112 @@ export function initializePermissions() {
         }
     });
 
+    // Handle screen protection check
+    ipcMain.handle('screen-protection:check-support', async (event) => {
+        try {
+            console.log('Checking screen protection support...');
+            
+            const { BrowserWindow } = await import('electron');
+            const win = BrowserWindow.fromWebContents(event.sender);
+            
+            if (!win) {
+                return { supported: false, reason: 'No window found' };
+            }
+            
+            // Check if setContentProtection method exists
+            const supported = typeof win.setContentProtection === 'function';
+            
+            return { 
+                supported,
+                platform: process.platform,
+                reason: supported ? 'Screen protection available' : 'Method not available'
+            };
+        } catch (error) {
+            console.error('Error checking screen protection support:', error);
+            return { supported: false, error: error.message };
+        }
+    });
+    
+    // Handle screen protection toggle
+    ipcMain.handle('screen-protection:set', async (event, enabled) => {
+        try {
+            console.log(`Setting screen protection to: ${enabled}`);
+            
+            const { BrowserWindow } = await import('electron');
+            const win = BrowserWindow.fromWebContents(event.sender);
+            
+            if (!win) {
+                return { success: false, error: 'No window found' };
+            }
+            
+            if (typeof win.setContentProtection !== 'function') {
+                return { success: false, error: 'setContentProtection not available' };
+            }
+            
+            // Set content protection
+            win.setContentProtection(enabled);
+            
+            // Additional macOS protection methods
+            if (enabled && process.platform === 'darwin') {
+                try {
+                    // Try to set additional privacy settings
+                    if (typeof win.setVisibleOnAllWorkspaces === 'function') {
+                        win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+                        win.setVisibleOnAllWorkspaces(false);
+                    }
+                    
+                    // Set window to be excluded from mission control
+                    if (typeof win.setExcludedFromShownWindowsMenu === 'function') {
+                        win.setExcludedFromShownWindowsMenu(true);
+                    }
+                    
+                    // Try sharingType method (newer Electron versions)
+                    if (typeof win.setSharingType === 'function') {
+                        win.setSharingType('none');
+                    }
+                } catch (e) {
+                    console.warn('Additional macOS protection methods failed:', e);
+                }
+            }
+            
+            return { success: true, enabled };
+        } catch (error) {
+            console.error('Error setting screen protection:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    // Handle screen protection status check
+    ipcMain.handle('screen-protection:get-status', async (event) => {
+        try {
+            console.log('Getting screen protection status...');
+            
+            const { BrowserWindow } = await import('electron');
+            const win = BrowserWindow.fromWebContents(event.sender);
+            
+            if (!win) {
+                return { status: 'unknown', error: 'No window found' };
+            }
+            
+            // Try to check if content protection is active
+            if (typeof win.isContentProtectionEnabled === 'function') {
+                const enabled = win.isContentProtectionEnabled();
+                return { status: enabled ? 'active' : 'inactive' };
+            }
+            
+            // For newer Electron versions, check sharingType
+            if (typeof win.getSharingType === 'function') {
+                const sharingType = win.getSharingType();
+                return { status: sharingType === 'none' ? 'active' : 'inactive' };
+            }
+            
+            return { status: 'unknown', reason: 'Cannot determine status' };
+        } catch (error) {
+            console.error('Error getting screen protection status:', error);
+            return { status: 'unknown', error: error.message };
+        }
+    });
+
     console.log('macOS permissions handlers initialized successfully');
 }
 
@@ -196,6 +302,9 @@ export function cleanupPermissions() {
     ipcMain.removeHandler('permissions:request');
     ipcMain.removeHandler('permissions:get-all');
     ipcMain.removeHandler('permissions:request-screen-capture');
+    ipcMain.removeHandler('screen-protection:check-support');
+    ipcMain.removeHandler('screen-protection:set');
+    ipcMain.removeHandler('screen-protection:get-status');
     
     console.log('macOS permissions handlers cleaned up');
 }

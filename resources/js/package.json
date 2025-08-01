@@ -1,5 +1,5 @@
 {
-    "name": "clueless",
+    "name": "clueless-dev",
     "version": "1.0.0",
     "description": "An awesome app built with NativePHP",
     "main": "./out/main/index.js",

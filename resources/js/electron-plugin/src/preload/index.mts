@@ -71,7 +71,24 @@ contextBridge.exposeInMainWorld('macPermissions', {
         AUTHORIZED: 'authorized',
         RESTRICTED: 'restricted',
         LIMITED: 'limited'
-    }
+    },
+    
+    /**
+     * Screen protection methods
+     */
+    screenProtection: {
+        checkSupport: async () => {
+            return await ipcRenderer.invoke('screen-protection:check-support');
+        },
+        
+        set: async (enabled: boolean) => {
+            return await ipcRenderer.invoke('screen-protection:set', enabled);
+        },
+        
+        getStatus: async () => {
+            return await ipcRenderer.invoke('screen-protection:get-status');
+        },
+    },
 });
 
 // Expose audio loopback API to renderer process (for manual mode)

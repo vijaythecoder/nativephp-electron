@@ -49,7 +49,18 @@ contextBridge.exposeInMainWorld('macPermissions', {
         AUTHORIZED: 'authorized',
         RESTRICTED: 'restricted',
         LIMITED: 'limited'
-    }
+    },
+    screenProtection: {
+        checkSupport: () => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ipcRenderer.invoke('screen-protection:check-support');
+        }),
+        set: (enabled) => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ipcRenderer.invoke('screen-protection:set', enabled);
+        }),
+        getStatus: () => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ipcRenderer.invoke('screen-protection:get-status');
+        }),
+    },
 });
 contextBridge.exposeInMainWorld('audioLoopback', {
     enableLoopbackAudio: () => ipcRenderer.invoke('enable-loopback-audio'),
