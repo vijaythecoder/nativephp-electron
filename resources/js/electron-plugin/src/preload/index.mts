@@ -89,6 +89,31 @@ contextBridge.exposeInMainWorld('macPermissions', {
             return await ipcRenderer.invoke('screen-protection:get-status');
         },
     },
+    
+    /**
+     * Overlay mode methods
+     */
+    overlayMode: {
+        checkSupport: async () => {
+            return await ipcRenderer.invoke('overlay-mode:check-support');
+        },
+        
+        setAlwaysOnTop: async (flag: boolean, level?: string) => {
+            return await ipcRenderer.invoke('overlay-mode:set-always-on-top', flag, level);
+        },
+        
+        setOpacity: async (opacity: number) => {
+            return await ipcRenderer.invoke('overlay-mode:set-opacity', opacity);
+        },
+        
+        getOpacity: async () => {
+            return await ipcRenderer.invoke('overlay-mode:get-opacity');
+        },
+        
+        setBackgroundColor: async (color: string) => {
+            return await ipcRenderer.invoke('overlay-mode:set-background-color', color);
+        },
+    },
 });
 
 // Expose audio loopback API to renderer process (for manual mode)

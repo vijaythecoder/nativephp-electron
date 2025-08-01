@@ -61,6 +61,23 @@ contextBridge.exposeInMainWorld('macPermissions', {
             return yield ipcRenderer.invoke('screen-protection:get-status');
         }),
     },
+    overlayMode: {
+        checkSupport: () => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ipcRenderer.invoke('overlay-mode:check-support');
+        }),
+        setAlwaysOnTop: (flag, level) => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ipcRenderer.invoke('overlay-mode:set-always-on-top', flag, level);
+        }),
+        setOpacity: (opacity) => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ipcRenderer.invoke('overlay-mode:set-opacity', opacity);
+        }),
+        getOpacity: () => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ipcRenderer.invoke('overlay-mode:get-opacity');
+        }),
+        setBackgroundColor: (color) => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ipcRenderer.invoke('overlay-mode:set-background-color', color);
+        }),
+    },
 });
 contextBridge.exposeInMainWorld('audioLoopback', {
     enableLoopbackAudio: () => ipcRenderer.invoke('enable-loopback-audio'),

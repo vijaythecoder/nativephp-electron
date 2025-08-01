@@ -288,6 +288,115 @@ export function initializePermissions() {
         }
     });
 
+    // Handle overlay mode support check
+    ipcMain.handle('overlay-mode:check-support', async (event) => {
+        try {
+            console.log('Checking overlay mode support...');
+            
+            const { BrowserWindow } = await import('electron');
+            const win = BrowserWindow.fromWebContents(event.sender);
+            
+            if (!win) {
+                return { supported: false, reason: 'No window found' };
+            }
+            
+            // Check if required methods exist
+            const supported = 
+                typeof win.setAlwaysOnTop === 'function' &&
+                typeof win.setOpacity === 'function' &&
+                typeof win.setBackgroundColor === 'function';
+            
+            return { 
+                supported,
+                platform: process.platform,
+                reason: supported ? 'Overlay mode available' : 'Required methods not available'
+            };
+        } catch (error) {
+            console.error('Error checking overlay mode support:', error);
+            return { supported: false, error: error.message };
+        }
+    });
+    
+    // Handle setting always on top
+    ipcMain.handle('overlay-mode:set-always-on-top', async (event, flag, level) => {
+        try {
+            console.log(`Setting always on top to: ${flag}, level: ${level}`);
+            
+            const { BrowserWindow } = await import('electron');
+            const win = BrowserWindow.fromWebContents(event.sender);
+            
+            if (!win) {
+                return { success: false, error: 'No window found' };
+            }
+            
+            win.setAlwaysOnTop(flag, level);
+            return { success: true, alwaysOnTop: flag };
+        } catch (error) {
+            console.error('Error setting always on top:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    // Handle setting window opacity
+    ipcMain.handle('overlay-mode:set-opacity', async (event, opacity) => {
+        try {
+            console.log(`Setting window opacity to: ${opacity}`);
+            
+            const { BrowserWindow } = await import('electron');
+            const win = BrowserWindow.fromWebContents(event.sender);
+            
+            if (!win) {
+                return { success: false, error: 'No window found' };
+            }
+            
+            win.setOpacity(opacity);
+            return { success: true, opacity };
+        } catch (error) {
+            console.error('Error setting opacity:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    // Handle getting window opacity
+    ipcMain.handle('overlay-mode:get-opacity', async (event) => {
+        try {
+            console.log('Getting window opacity...');
+            
+            const { BrowserWindow } = await import('electron');
+            const win = BrowserWindow.fromWebContents(event.sender);
+            
+            if (!win) {
+                return { success: false, error: 'No window found' };
+            }
+            
+            const opacity = win.getOpacity();
+            return { success: true, opacity };
+        } catch (error) {
+            console.error('Error getting opacity:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    // Handle setting background color
+    ipcMain.handle('overlay-mode:set-background-color', async (event, color) => {
+        try {
+            console.log(`Setting background color to: ${color}`);
+            
+            const { BrowserWindow } = await import('electron');
+            const win = BrowserWindow.fromWebContents(event.sender);
+            
+            if (!win) {
+                return { success: false, error: 'No window found' };
+            }
+            
+            win.setBackgroundColor(color);
+            return { success: true, color };
+        } catch (error) {
+            console.error('Error setting background color:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     console.log('macOS permissions handlers initialized successfully');
 }
 
@@ -305,6 +414,11 @@ export function cleanupPermissions() {
     ipcMain.removeHandler('screen-protection:check-support');
     ipcMain.removeHandler('screen-protection:set');
     ipcMain.removeHandler('screen-protection:get-status');
+    ipcMain.removeHandler('overlay-mode:check-support');
+    ipcMain.removeHandler('overlay-mode:set-always-on-top');
+    ipcMain.removeHandler('overlay-mode:set-opacity');
+    ipcMain.removeHandler('overlay-mode:get-opacity');
+    ipcMain.removeHandler('overlay-mode:set-background-color');
     
     console.log('macOS permissions handlers cleaned up');
 }
