@@ -13,10 +13,17 @@ const Native = {
     contextMenu: (template) => {
         let menu = remote.Menu.buildFromTemplate(template);
         menu.popup({ window: remote.getCurrentWindow() });
-    }
+    },
+    ipcRendererInvoke: new Proxy({}, {
+        get: (target, methodName) => {
+            console.log(methodName);
+            return (...args) => ipcRenderer.invoke(String(methodName), ...args);
+        }
+    })
 };
 window.Native = Native;
 window.remote = remote;
+
 ipcRenderer.on('log', (event, { level, message, context }) => {
     if (level === 'error') {
         console.error(`[${level}] ${message}`, context);

@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Router } from "express";
 import bodyParser from "body-parser";
 import getPort, {portNumbers} from "get-port";
 import middleware from "./api/middleware.js";
@@ -26,13 +26,14 @@ import progressBarRoutes from "./api/progressBar.js";
 import powerMonitorRoutes from "./api/powerMonitor.js";
 import childProcessRoutes from "./api/childProcess.js";
 import { Server } from "net";
+import { Extension } from "../extensions/loader.js";
 
 export interface APIProcess {
   server: Server;
   port: number;
 }
 
-async function startAPIServer(randomSecret: string): Promise<APIProcess> {
+async function startAPIServer(randomSecret: string, extensions: Extension[] = []): Promise<APIProcess> {
   const port = await getPort({
     port: portNumbers(4000, 5000),
   });
@@ -65,6 +66,20 @@ async function startAPIServer(randomSecret: string): Promise<APIProcess> {
 
     if (process.env.NODE_ENV === "development") {
       httpServer.use("/api/debug", debugRoutes);
+    }
+
+    // Register extension API routes
+    for (const ext of extensions) {
+      if (ext.apiRoutes) {
+        try {
+          const router = Router();
+          ext.apiRoutes(router);
+          httpServer.use(router);
+          console.log('[NativePHP] Registered extension API routes');
+        } catch (error) {
+          console.error('[NativePHP] Error registering extension API routes:', error);
+        }
+      }
     }
 
     const server = httpServer.listen(port, () => {

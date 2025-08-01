@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import express from "express";
+import express, { Router } from "express";
 import bodyParser from "body-parser";
 import getPort, { portNumbers } from "get-port";
 import middleware from "./api/middleware.js";
@@ -33,8 +33,8 @@ import shellRoutes from "./api/shell.js";
 import progressBarRoutes from "./api/progressBar.js";
 import powerMonitorRoutes from "./api/powerMonitor.js";
 import childProcessRoutes from "./api/childProcess.js";
-function startAPIServer(randomSecret) {
-    return __awaiter(this, void 0, void 0, function* () {
+function startAPIServer(randomSecret_1) {
+    return __awaiter(this, arguments, void 0, function* (randomSecret, extensions = []) {
         const port = yield getPort({
             port: portNumbers(4000, 5000),
         });
@@ -65,6 +65,19 @@ function startAPIServer(randomSecret) {
             httpServer.use("/api/broadcast", broadcastingRoutes);
             if (process.env.NODE_ENV === "development") {
                 httpServer.use("/api/debug", debugRoutes);
+            }
+            for (const ext of extensions) {
+                if (ext.apiRoutes) {
+                    try {
+                        const router = Router();
+                        ext.apiRoutes(router);
+                        httpServer.use(router);
+                        console.log('[NativePHP] Registered extension API routes');
+                    }
+                    catch (error) {
+                        console.error('[NativePHP] Error registering extension API routes:', error);
+                    }
+                }
             }
             const server = httpServer.listen(port, () => {
                 resolve({

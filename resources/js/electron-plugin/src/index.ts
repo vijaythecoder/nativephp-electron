@@ -1,5 +1,5 @@
 import CrossProcessExports from "electron";
-import { app, session, powerMonitor } from "electron";
+import { app, session, powerMonitor, ipcMain } from "electron";
 import { initialize } from "@electron/remote/main/index.js";
 import state from "./server/state.js";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
@@ -15,6 +15,7 @@ import { resolve } from "path";
 import { stopAllProcesses } from "./server/api/childProcess.js";
 import ps from "ps-node";
 import killSync from "kill-sync";
+import { loadUserExtensions, Extension } from "./extensions/loader.js";
 
 // Workaround for CommonJS module
 import electronUpdater from 'electron-updater';
@@ -24,19 +25,50 @@ class NativePHP {
   processes = [];
   schedulerInterval = undefined;
   mainWindow = null;
+  extensions: Extension[] = [];
 
-  public bootstrap(
+  public async bootstrap(
     app: CrossProcessExports.App,
     icon: string,
     phpBinary: string,
     cert: string
   ) {
 
+    // Load user extensions
+    this.extensions = await loadUserExtensions();
+
+    // Call beforeReady hooks
+    for (const ext of this.extensions) {
+      if (ext.beforeReady) {
+        try {
+          await ext.beforeReady(app);
+        } catch (error) {
+          console.error('[NativePHP] Extension beforeReady error:', error);
+        }
+      }
+    }
+
+    // Register IPC handlers from extensions (must be done before app.whenReady)
+    for (const ext of this.extensions) {
+      if (ext.ipcHandlers) {
+        Object.entries(ext.ipcHandlers).forEach(([channel, handler]) => {
+          // Check if handler is already registered to avoid duplicate registration
+          if (!ipcMain.listenerCount(channel)) {
+            ipcMain.handle(channel, handler);
+          } else {
+            console.warn(`[Extension] IPC handler '${channel}' already registered, skipping`);
+          }
+        });
+      }
+    }
+    
     initialize();
 
     state.icon = icon;
     state.php = phpBinary;
     state.caCert = cert;
+
+    
 
     this.bootstrapApp(app);
     this.addEventListeners(app);
@@ -63,7 +95,18 @@ class NativePHP {
       }
     });
 
-    app.on("before-quit", () => {
+    app.on("before-quit", async () => {
+      // Call beforeQuit hooks
+      for (const ext of this.extensions) {
+        if (ext.beforeQuit) {
+          try {
+            await ext.beforeQuit();
+          } catch (error) {
+            console.error('[NativePHP] Extension beforeQuit error:', error);
+          }
+        }
+      }
+
       if (this.schedulerInterval) {
           clearInterval(this.schedulerInterval);
       }
@@ -108,6 +151,17 @@ class NativePHP {
 
     await this.startPhpApp();
     this.startScheduler();
+
+    // Call afterReady hooks (window will be created by Laravel)
+    for (const ext of this.extensions) {
+      if (ext.afterReady) {
+        try {
+          await ext.afterReady(app, this.mainWindow);
+        } catch (error) {
+          console.error('[NativePHP] Extension afterReady error:', error);
+        }
+      }
+    }
 
     powerMonitor.on("suspend", () => {
       this.stopScheduler();
@@ -219,7 +273,7 @@ class NativePHP {
 
   private async startElectronApi() {
     // Start an Express server so that the Electron app can be controlled from PHP via API
-    const electronApi = await startAPI();
+    const electronApi = await startAPI(this.extensions);
 
     state.electronApiPort = electronApi.port;
 

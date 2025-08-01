@@ -16,7 +16,13 @@ const Native = {
     contextMenu: (template) => {
         let menu = remote.Menu.buildFromTemplate(template);
         menu.popup({ window: remote.getCurrentWindow() });
-    }
+    },
+    ipcRendererInvoke: new Proxy({}, {
+        get: (target, methodName) => {
+          console.log(methodName)
+            return (...args) => ipcRenderer.invoke(String(methodName), ...args);
+        }
+    })
 };
 
 // @ts-ignore
