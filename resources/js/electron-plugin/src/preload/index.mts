@@ -1,5 +1,5 @@
 import remote from "@electron/remote";
-import {ipcRenderer} from "electron";
+import {ipcRenderer, contextBridge} from "electron";
 
 const Native = {
     on: (event, callback) => {
@@ -19,11 +19,117 @@ const Native = {
     }
 };
 
-// @ts-ignore
-window.Native = Native;
+// Expose Native and remote APIs using contextBridge
+contextBridge.exposeInMainWorld('Native', Native);
+contextBridge.exposeInMainWorld('remote', remote);
 
-// @ts-ignore
-window.remote = remote;
+// Expose macOS permissions API using contextBridge
+contextBridge.exposeInMainWorld('macPermissions', {
+    /**
+     * Check the current status of a permission
+     * @param {string} permissionType - One of: camera, microphone, screen, documents, downloads
+     * @returns {Promise<{success: boolean, permission: string, status?: string, error?: string}>}
+     */
+    checkPermission: async (permissionType: string) => {
+        return await ipcRenderer.invoke('permissions:check', permissionType)
+    },
+
+    /**
+     * Request a specific permission
+     * @param {string} permissionType - One of: camera, microphone, screen, documents, downloads
+     * @returns {Promise<{success: boolean, permission: string, status?: string, error?: string}>}
+     */
+    requestPermission: async (permissionType: string) => {
+        return await ipcRenderer.invoke('permissions:request', permissionType)
+    },
+
+    /**
+     * Get status of all supported permissions
+     * @returns {Promise<{success: boolean, permissions?: object, error?: string}>}
+     */
+    getAllPermissions: async () => {
+        return await ipcRenderer.invoke('permissions:get-all')
+    },
+
+    /**
+     * Available permission types
+     */
+    PERMISSION_TYPES: {
+        CAMERA: 'camera',
+        MICROPHONE: 'microphone',
+        SCREEN: 'screen',
+        DOCUMENTS: 'documents',
+        DOWNLOADS: 'downloads'
+    },
+
+    /**
+     * Permission status values
+     */
+    PERMISSION_STATUS: {
+        NOT_DETERMINED: 'not determined',
+        DENIED: 'denied',
+        AUTHORIZED: 'authorized',
+        RESTRICTED: 'restricted',
+        LIMITED: 'limited'
+    },
+    
+    /**
+     * Screen protection methods
+     */
+    screenProtection: {
+        checkSupport: async () => {
+            return await ipcRenderer.invoke('screen-protection:check-support');
+        },
+        
+        set: async (enabled: boolean) => {
+            return await ipcRenderer.invoke('screen-protection:set', enabled);
+        },
+        
+        getStatus: async () => {
+            return await ipcRenderer.invoke('screen-protection:get-status');
+        },
+    },
+    
+    /**
+     * Overlay mode methods
+     */
+    overlayMode: {
+        checkSupport: async () => {
+            return await ipcRenderer.invoke('overlay-mode:check-support');
+        },
+        
+        setAlwaysOnTop: async (flag: boolean, level?: string) => {
+            return await ipcRenderer.invoke('overlay-mode:set-always-on-top', flag, level);
+        },
+        
+        setOpacity: async (opacity: number) => {
+            return await ipcRenderer.invoke('overlay-mode:set-opacity', opacity);
+        },
+        
+        getOpacity: async () => {
+            return await ipcRenderer.invoke('overlay-mode:get-opacity');
+        },
+        
+        setBackgroundColor: async (color: string) => {
+            return await ipcRenderer.invoke('overlay-mode:set-background-color', color);
+        },
+    },
+});
+
+// Expose audio loopback API to renderer process (for manual mode)
+contextBridge.exposeInMainWorld('audioLoopback', {
+    /**
+     * Enable audio loopback capture
+     * This will override the default getDisplayMedia behavior
+     */
+    enableLoopbackAudio: () => ipcRenderer.invoke('enable-loopback-audio'),
+    
+    /**
+     * Disable audio loopback capture
+     * This will restore full getDisplayMedia functionality
+     */
+    disableLoopbackAudio: () => ipcRenderer.invoke('disable-loopback-audio')
+});
 
 ipcRenderer.on('log', (event, {level, message, context}) => {
     if (level === 'error') {
