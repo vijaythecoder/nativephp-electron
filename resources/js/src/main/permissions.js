@@ -1,5 +1,25 @@
 import { ipcMain } from 'electron';
-import permissions from 'node-mac-permissions';
+
+// Platform check for node-mac-permissions
+let permissions = null;
+if (process.platform === 'darwin') {
+    try {
+        permissions = (await import('node-mac-permissions')).default;
+    } catch (error) {
+        console.warn('node-mac-permissions not available:', error.message);
+    }
+}
+
+// Stub for non-macOS platforms
+if (!permissions) {
+    permissions = {
+        getAuthStatus: () => 'authorized',
+        askForCameraAccess: async () => 'authorized',
+        askForMicrophoneAccess: async () => 'authorized',
+        askForScreenCaptureAccess: () => {},
+        askForFoldersAccess: async () => 'authorized'
+    };
+}
 
 /**
  * Available permission types for macOS
@@ -21,7 +41,13 @@ const PERMISSION_TYPES = {
  * Initialize permissions IPC handlers
  */
 export function initializePermissions() {
-    console.log('Initializing macOS permissions handlers...')
+    // Skip initialization on non-macOS platforms
+    if (process.platform !== 'darwin' && !permissions) {
+        console.log('Permissions handlers not initialized - not running on macOS');
+        return;
+    }
+    
+    console.log('Initializing permissions handlers...')
 
     // Handle permission status checks
     ipcMain.handle('permissions:check', async (event, permissionType) => {
@@ -397,14 +423,14 @@ export function initializePermissions() {
         }
     });
 
-    console.log('macOS permissions handlers initialized successfully');
+    console.log('Permissions handlers initialized successfully');
 }
 
 /**
  * Cleanup permissions handlers
  */
 export function cleanupPermissions() {
-    console.log('Cleaning up macOS permissions handlers...');
+    console.log('Cleaning up permissions handlers...');
     
     // Remove IPC handlers
     ipcMain.removeHandler('permissions:check');
@@ -420,7 +446,7 @@ export function cleanupPermissions() {
     ipcMain.removeHandler('overlay-mode:get-opacity');
     ipcMain.removeHandler('overlay-mode:set-background-color');
     
-    console.log('macOS permissions handlers cleaned up');
+    console.log('Permissions handlers cleaned up');
 }
 
 /**
